@@ -13,8 +13,9 @@ TODO: switch print statments to debug logs
 
 import pprint # dont really need this except for main()
 import logging
-import yaml
 import os
+import yaml
+
 
 def load_config():
     """Loads the YAML config first from config.yml, then own_config.yml"""

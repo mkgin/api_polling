@@ -8,14 +8,15 @@ import socket #for errors from ZabbixSender
 import logging #ZabbixSender
 from pyzabbix import ZabbixMetric, ZabbixSender, ZabbixResponse
 
-import os
+
 from datetime import datetime
 
 import sys
 
-import json
-import time
-import pprint
+#import os
+#import json
+#import time
+#import pprint
 
 CONFIG_FILE = "tradfri_standalone_psk.conf"
 
@@ -64,14 +65,13 @@ def send_zabbix_packet(zabbix_packet , zabbix_sender_setting):
     except:
         logging.error(f'Unexpected error: {sys.exc_info()[0]}')
         raise
-    return sending_status,zaserver_response 
-
+    return sending_status,zaserver_response
 def zabbix_send_result_string( result ):
     """
-    Returns a result string (zabbix server response) to print or log the result returned by ZabbixSender
+    Returns a result string (zabbix server response) to print or log the
+    result returned by ZabbixSender
     """
     return 'zabbix_send_result[' \
                     f'processed: {result.processed} , ' \
                     f'failed: {result.failed} , ' \
                     f'total: {result.total}]'
-

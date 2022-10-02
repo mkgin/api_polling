@@ -33,6 +33,7 @@ def test_times_straddle_minute( time_1,time_2, minutes ):
     return False
 
 def main():
+    """some tests"""
     # test test_times_straddle_minute
     time_15m41s = 941
     time_16m41s = 1001
