@@ -32,6 +32,29 @@ def test_times_straddle_minute( time_1,time_2, minutes ):
             return True
     return False
 
+def try_n_times( function, parameters,  n=3, expected_exceptions='', seconds=1):
+    """ Try a function up to n times (default 3)
+
+        Return result on first success
+        Try again with expected_exceptions after sleep.
+        eg "expected_exceptions=(NameError , TimeoutError)
+        otherwise raise exception
+    """
+    try_it_times = n
+    for try_it in range(try_it_times):
+        try_error = True
+        try:
+            # print(x) #test exception name error (when x is not defined)
+            result = function(parameters)
+            try_error = False
+            return result
+        except expected_exceptions:
+            logging.warning(
+                f'try_n_times(): try {try_it} expected exception, sleeping {seconds} s')
+            if try_it < try_it_times:
+                time.sleep(seconds)
+    raise TooManyRetries
+
 def main():
     """some tests"""
     # test test_times_straddle_minute
