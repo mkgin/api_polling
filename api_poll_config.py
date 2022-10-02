@@ -14,6 +14,28 @@ TODO: switch print statments to debug logs
 import pprint # dont really need this except for main()
 import logging
 import yaml
+import os
+
+def load_config():
+    """Loads the YAML config first from config.yml, then own_config.yml"""
+    # basic config
+    # api config
+    config = {}
+    current_path = os.getcwd()
+    # should really just loop through config files.
+    # and maybe allow one to be specified as an argument
+    configfile_default = f'{current_path}/config.yml'
+    configfile_own = f'{current_path}/own_config.yml'
+    print( current_path,configfile_default, configfile_own)
+    if os.path.isfile(configfile_default):
+        config = yaml.safe_load(open(configfile_default))
+    else:
+        logging.warning(f'Missing:  {configfile_default}' )
+    if os.path.isfile(configfile_own):
+        config.update(yaml.safe_load(open(configfile_own)))
+    else:
+        logging.warning('Missing: {configfile_own}' )
+    return config
 
 # store the sending strategy for endpoints here...
 # queried as sending_strategy[endpoint][key][strategy]
