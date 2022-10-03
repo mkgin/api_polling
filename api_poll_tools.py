@@ -40,6 +40,8 @@ def try_n_times( function, parameters,  n=3, expected_exceptions='', seconds=1):
         eg "expected_exceptions=(NameError , TimeoutError)
         otherwise raise exception
     """
+    class TooManyRetries(Exception):
+        pass
     try_it_times = n
     for try_it in range(try_it_times):
         try_error = True
