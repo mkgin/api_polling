@@ -32,7 +32,38 @@ def test_times_straddle_minute( time_1,time_2, minutes ):
             return True
     return False
 
-def try_n_times( function, parameters,  n=3, expected_exceptions='', seconds=1):
+#nonlocal previous_try_slowly
+#previous_try_slowly = 0.1
+def try_slowly(function, parameters, expected_exceptions='', seconds = 1): #, nonlocal previous_try_slowly):
+    """
+        Try a function but sleep if this has been called before
+        seconds since try_slowly was last called
+    """
+    class UnexpectedException(Exception):
+        pass
+    current_timestamp = time.time()
+    if not hasattr(try_slowly,'previous_timestamp'):
+        try_slowly.previous_timestamp = current_timestamp - seconds
+        logging.info(f'try_slowly: first time: setting previous_timestamp now - {seconds} s')
+    logging.debug(f'current_timestamp: {current_timestamp}')
+    logging.debug(f'try_slowly.previous_timestamp {try_slowly.previous_timestamp}')
+    interval = current_timestamp - try_slowly.previous_timestamp
+    logging.debug(f'try_slowly: interval: {interval} s')
+    if interval < seconds:
+        logging.info(f'try_slowly: sleeping for {seconds-interval} s')
+        time.sleep(seconds-interval)
+    try:
+         result = function(parameters)
+         try_slowly.previous_timestamp = time.time()
+         return result
+    except expected_exceptions:
+        try_slowly.previous_timestamp = time.time()
+        logging.warning(
+            f'try_slowly(): try_slowy expected exception')
+    try_slowly.previous_timestamp = time.time() #just in case the one expects the Unexpected
+    raise UnexpectedException
+
+def try_n_times( function, parameters,  n=3, expected_exceptions='', seconds=1 , try_slowly_seconds=1):
     """ Try a function up to n times (default 3)
 
         Return result on first success
@@ -43,11 +74,11 @@ def try_n_times( function, parameters,  n=3, expected_exceptions='', seconds=1):
     class TooManyRetries(Exception):
         pass
     try_it_times = n
-    for try_it in range(try_it_times):
+    for try_it in range(1,try_it_times):
         try_error = True
         try:
             # print(x) #test exception name error (when x is not defined)
-            result = function(parameters)
+            result = try_slowly(function, parameters, expected_exceptions, seconds=try_slowly_seconds )
             try_error = False
             return result
         except expected_exceptions:
