@@ -4,7 +4,10 @@ Module api_poll_tools.py
 import time
 from calendar import timegm
 import logging
-
+class UnexpectedException(Exception):
+    pass
+class TooManyRetries(Exception):
+    pass
 def test_times_straddle_minute( time_1,time_2, minutes ):
     """
     Tests if start of a minute or list of minutes is between time1 and time2.
@@ -39,8 +42,8 @@ def try_slowly(function, parameters, expected_exceptions='', seconds = 1): #, no
         Try a function but sleep if this has been called before
         seconds since try_slowly was last called
     """
-    class UnexpectedException(Exception):
-        pass
+##    class UnexpectedException(Exception):
+##        pass
     current_timestamp = time.time()
     if not hasattr(try_slowly,'previous_timestamp'):
         try_slowly.previous_timestamp = current_timestamp - seconds
@@ -71,8 +74,8 @@ def try_n_times( function, parameters,  n=3, expected_exceptions='', seconds=1 ,
         eg "expected_exceptions=(NameError , TimeoutError)
         otherwise raise exception
     """
-    class TooManyRetries(Exception):
-        pass
+##    class TooManyRetries(Exception):
+##        pass
     try_it_times = n
     for try_it in range(1,try_it_times):
         try_error = True
@@ -81,6 +84,11 @@ def try_n_times( function, parameters,  n=3, expected_exceptions='', seconds=1 ,
             result = try_slowly(function, parameters, expected_exceptions, seconds=try_slowly_seconds )
             try_error = False
             return result
+        except UnexpectedException:
+            logging.warning(
+                f'try_n_times(): try {try_it} expected exception, sleeping {seconds} s')
+            if try_it < try_it_times:
+                time.sleep(seconds)
         except expected_exceptions:
             logging.warning(
                 f'try_n_times(): try {try_it} expected exception, sleeping {seconds} s')
