@@ -5,9 +5,9 @@ import time
 from calendar import timegm
 import logging
 class UnexpectedException(Exception):
-    pass
+    """UnexpectedException"""
 class TooManyRetries(Exception):
-    pass
+    """TooManyRetries"""
 def test_times_straddle_minute( time_1,time_2, minutes ):
     """
     Tests if start of a minute or list of minutes is between time1 and time2.
@@ -54,17 +54,18 @@ def try_slowly(function, parameters, expected_exceptions='', seconds = 1):
         logging.info(f'try_slowly: sleeping for {seconds-interval} s')
         time.sleep(seconds-interval)
     try:
-         result = function(parameters)
-         try_slowly.previous_timestamp = time.time()
-         return result
+        result = function(parameters)
+        try_slowly.previous_timestamp = time.time()
+        return result
     except expected_exceptions:
         try_slowly.previous_timestamp = time.time()
         logging.warning(
-            f'try_slowly(): try_slowy expected exception')
+            'try_slowly(): try_slowy expected exception')
     try_slowly.previous_timestamp = time.time() #just in case the one expects the Unexpected
     raise UnexpectedException
 
-def try_n_times( function, parameters,  n=3, expected_exceptions='', seconds=1 , try_slowly_seconds=1):
+def try_n_times( function, parameters,  n=3, expected_exceptions='',
+                 seconds=1, try_slowly_seconds=1):
     """ Try a function up to n times (default 3)
 
         Return result on first success
@@ -74,11 +75,12 @@ def try_n_times( function, parameters,  n=3, expected_exceptions='', seconds=1 ,
     """
     try_it_times = n
     for try_it in range(1,try_it_times):
-        try_error = True
+        #try_error = True
         try:
             # print(x) #test exception name error (when x is not defined)
-            result = try_slowly(function, parameters, expected_exceptions, seconds=try_slowly_seconds )
-            try_error = False
+            result = try_slowly(function, parameters,
+                                expected_exceptions, seconds=try_slowly_seconds )
+            #try_error = False
             return result
         except UnexpectedException:
             logging.warning(
@@ -115,5 +117,5 @@ def main():
             x = test_times_straddle_minute(time_16m41s,time_15m41s, test )
             print(f'result {x}')
         except:
-            print(f'Exception error:') # {sys.exc_info()[0]}')
+            print('Exception error:') # {sys.exc_info()[0]}')
         print("***")
