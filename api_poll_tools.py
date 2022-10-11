@@ -35,15 +35,13 @@ def test_times_straddle_minute( time_1,time_2, minutes ):
             return True
     return False
 
-#nonlocal previous_try_slowly
-#previous_try_slowly = 0.1
-def try_slowly(function, parameters, expected_exceptions='', seconds = 1): #, nonlocal previous_try_slowly):
+def try_slowly(function, parameters, expected_exceptions='', seconds = 1):
     """
         Try a function but sleep if this has been called before
         seconds since try_slowly was last called
+
+        expected_exceptions can be an exception or tuple of exceptions
     """
-##    class UnexpectedException(Exception):
-##        pass
     current_timestamp = time.time()
     if not hasattr(try_slowly,'previous_timestamp'):
         try_slowly.previous_timestamp = current_timestamp - seconds
@@ -74,8 +72,6 @@ def try_n_times( function, parameters,  n=3, expected_exceptions='', seconds=1 ,
         eg "expected_exceptions=(NameError , TimeoutError)
         otherwise raise exception
     """
-##    class TooManyRetries(Exception):
-##        pass
     try_it_times = n
     for try_it in range(1,try_it_times):
         try_error = True
