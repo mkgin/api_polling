@@ -39,24 +39,28 @@ def send_zabbix_packet(zabbix_packet , zabbix_sender_setting):
         logging.debug(f'Zabbix Sender succeeded\n{zaserver_response}')
         sending_status = True
     except (socket.timeout, socket.error, ConnectionRefusedError ) as error_msg:
-        logging.warning('Zabbix Sender Failed to send some or all: {0}'.format(error_msg))
+        logging.error('Zabbix Sender Failed to send some or all: {0}'.format(error_msg))
         # if sending fails, Zabbix server may be restarting or rebooting.
         # maybe it gets sent after the next polling attempt.
         # if zabbix_packet is more than x items or if failure time
         # greater than x save to disk
-        if zabbix_send_failed_time == 0 : #first fail (after successful send or save)
-            zabbix_send_failed_time = epoch_time
-            # could set defaults for failed item sending timeout and count.
-        if  ( epoch_time - zabbix_send_failed_time > zabbix_send_failed_time_max #900
-            or len(zabbix_packet) > zabbix_send_failed_items_max #500
-            ):
-            logging.error(f'Zabbix Sender failed {epoch_time-zabbix_send_failed_time} seconds ago')
-            logging.error(f'{len(zabbix_packet)} items pending.\nWill try to dump them to disk')
-            save_zabbix_packet_to_disk(zabbix_packet)
-            zabbix_send_failed_time = epoch_time
-            zabbix_packet = [] #it's saved now ok to erase
-            # clear keys from lastchanged so fresh values are collected to be sent next time
-            lastchanged={}
+        # this has been an idea for a while but not done yet 20221012...
+        # For now just log it
+        traceback.print_tb(sys.exc_info()[2])
+##        
+##        if zabbix_send_failed_time == 0 : #first fail (after successful send or save)
+##            zabbix_send_failed_time = epoch_time
+##            # could set defaults for failed item sending timeout and count.
+##        if  ( epoch_time - zabbix_send_failed_time > zabbix_send_failed_time_max #900
+##            or len(zabbix_packet) > zabbix_send_failed_items_max #500
+##            ):
+##            logging.error(f'Zabbix Sender failed {epoch_time-zabbix_send_failed_time} seconds ago')
+##            logging.error(f'{len(zabbix_packet)} items pending.\nWill try to dump them to disk')
+##            save_zabbix_packet_to_disk(zabbix_packet)
+##            zabbix_send_failed_time = epoch_time
+##            zabbix_packet = [] #it's saved now ok to erase
+##            # clear keys from lastchanged so fresh values are collected to be sent next time
+##            lastchanged={}
     except AttributeError:
         logging.error(f'send_zabbix_packet():AttributeError: Probably the zabbix server returned '
                       'something strange like an empty response header')
