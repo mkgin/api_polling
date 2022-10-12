@@ -12,13 +12,8 @@ from pyzabbix import ZabbixMetric, ZabbixSender, ZabbixResponse
 from datetime import datetime
 
 import sys
+import traceback
 
-#import os
-#import json
-#import time
-#import pprint
-
-CONFIG_FILE = "tradfri_standalone_psk.conf"
 
 # Count data recieved from zabbix server
 zabbix_server_processed = 0 #
@@ -62,8 +57,12 @@ def send_zabbix_packet(zabbix_packet , zabbix_sender_setting):
             zabbix_packet = [] #it's saved now ok to erase
             # clear keys from lastchanged so fresh values are collected to be sent next time
             lastchanged={}
+    except AttributeError:
+        logging.error(f'send_zabbix_packet():AttributeError: Probably the zabbix server returned '
+                      'something strange like an empty response header')
+        traceback.print_tb(sys.exc_info()[2])
     except:
-        logging.error(f'Unexpected error: {sys.exc_info()[0]}')
+        logging.error(f'send_zabbix_packet(): Unexpected error: {sys.exc_info()[0]}')
         raise
     return sending_status,zaserver_response
 def zabbix_send_result_string( result ):

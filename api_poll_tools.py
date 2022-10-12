@@ -3,6 +3,7 @@ Module api_poll_tools.py
 """
 import sys
 import time
+import traceback
 from calendar import timegm
 import logging
 class UnexpectedException(BaseException):
@@ -79,22 +80,21 @@ def try_slowly(function, parameters, expected_exceptions=TrySlowlyEmptyExpectedE
         return result
     except expected_exceptions:
         try_slowly.expected_exception_count += 1
-        logging.warning(
-            'try_slowly(): try_slowly expected exception')
-        raise TrySlowlyExpectedException().with_traceback(sys.exc_info()[2])
+        logging.warning('try_slowly(): try_slowly expected exception')
+        traceback.print_tb(sys.exc_info()[2])
+        raise TrySlowlyExpectedException
     except:
         try_slowly.unexpected_exception_count += 1
-        logging.error(
-            'try_slowly(): try_slowly unexpected exception')
-        raise TrySlowlyUnexpectedException().with_traceback(sys.exc_info()[2])
+        logging.error('try_slowly(): try_slowly unexpected exception')
+        traceback.print_tb(sys.exc_info()[2])
+        raise TrySlowlyUnexpectedException
     finally:
         try_slowly.previous_timestamp = time.time()
+        logging.info('try_slowly(): in \'finally:\'')
         logging.debug(f'try_slowly.previous_timestamp {try_slowly.previous_timestamp}')
         logging.debug(f'try_slowly.expected_exception_count: {try_slowly.expected_exception_count}')
         logging.debug(f'try_slowly.unexpected_exception_count: '
                       f'{try_slowly.unexpected_exception_count}')
-        logging.info(
-            'try_slowly(): in \'finally:\'')
     logging.error('try_slowly(): should not be here unless testing')
     #try_slowly.previous_timestamp = time.time() #just in case the one expects the Unexpected
     #raise UnexpectedException
@@ -109,8 +109,9 @@ def try_n_times( function, parameters,  n=3, expected_exceptions='',
         otherwise raise exception
     """
     try_it_times = n
-    for try_it in range(1,try_it_times):
+    for try_it in range(1,try_it_times+1):
         #try_error = True
+        logging.info(f'try_n_times(): try # {try_it}/{try_it_times}')
         try:
             # print(x) #test exception name error (when x is not defined)
             result = try_slowly(function, parameters,
@@ -118,16 +119,27 @@ def try_n_times( function, parameters,  n=3, expected_exceptions='',
             #try_error = False
             return result
         # FIXME except TrySlowlyUnexpectedException: #depends on what is using this...
-        except (UnexpectedException, TrySlowlyUnexpectedException):
-            logging.warning(
-                f'try_n_times(): try {try_it} expected exception, sleeping {seconds} s')
-            if try_it < try_it_times:
+        except ( (TrySlowlyExpectedException,) + (expected_exceptions, )):
+            logging.info(
+                f'try_n_times(): expected exception (in try_slowly)\n sleeping {seconds} s')
+            if try_it <= try_it_times:
                 time.sleep(seconds)
-        except expected_exceptions:
-            logging.warning(
-                f'try_n_times(): try {try_it} expected exception, sleeping {seconds} s')
-            if try_it < try_it_times:
+            else:
+                raise TooManyRetries
+
+##        except expected_exceptions:
+##            logging.warning(
+##                f'try_n_times(): try {try_it} expected exception, sleeping {seconds} s')
+##            if try_it < try_it_times:
+##                time.sleep(seconds)
+        except TrySlowlyUnexpectedException:
+            logging.error(
+                f'try_n_times(): **Unexpected exception** (in try_slowly), sleeping {seconds} s')
+            logging.error(sys.exc_info())
+            if try_it <= try_it_times:
                 time.sleep(seconds)
+            else:
+                raise TooManyRetries
     raise TooManyRetries
 
 def tests():
