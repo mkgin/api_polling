@@ -58,7 +58,9 @@ def try_slowly(function, parameters, expected_exceptions=TrySlowlyEmptyExpectedE
         seconds since try_slowly was last called
 
         expected_exceptions can be an exception or tuple of exceptions
+        try_slowly.success is True on success False on failure
     """
+    try_slowly.success = False
     if not hasattr(try_slowly,'expected_exception_count'):
         try_slowly.expected_exception_count = 0
     if not hasattr(try_slowly,'unexpected_exception_count'):
@@ -77,6 +79,7 @@ def try_slowly(function, parameters, expected_exceptions=TrySlowlyEmptyExpectedE
         time.sleep(seconds-interval)
     try:
         result = function(parameters)
+        try_slowly.success = True
         return result
     except expected_exceptions:
         try_slowly.expected_exception_count += 1
@@ -95,9 +98,8 @@ def try_slowly(function, parameters, expected_exceptions=TrySlowlyEmptyExpectedE
         logging.debug(f'try_slowly.expected_exception_count: {try_slowly.expected_exception_count}')
         logging.debug(f'try_slowly.unexpected_exception_count: '
                       f'{try_slowly.unexpected_exception_count}')
-    logging.error('try_slowly(): should not be here unless testing')
-    #try_slowly.previous_timestamp = time.time() #just in case the one expects the Unexpected
-    #raise UnexpectedException
+    logging.error('try_slowly(): should not be here')
+
 
 def try_n_times( function, parameters,  n=3, expected_exceptions='',
                  seconds=1, try_slowly_seconds=1):
@@ -107,18 +109,19 @@ def try_n_times( function, parameters,  n=3, expected_exceptions='',
         Try again with expected_exceptions after sleep.
         eg "expected_exceptions=(NameError , TimeoutError)
         otherwise raise exception
+
+        try_n_times.success is True on success False on failure
     """
+    try_n_times.success = False
     try_it_times = n
     for try_it in range(1,try_it_times+1):
         #try_error = True
         logging.info(f'try_n_times(): try # {try_it}/{try_it_times}')
         try:
-            # print(x) #test exception name error (when x is not defined)
             result = try_slowly(function, parameters,
                                 expected_exceptions, seconds=try_slowly_seconds )
-            #try_error = False
+            try_n_times.success = True
             return result
-        # FIXME except TrySlowlyUnexpectedException: #depends on what is using this...
         except ( (TrySlowlyExpectedException,) + (expected_exceptions, )):
             logging.info(
                 f'try_n_times(): expected exception (in try_slowly)\n sleeping {seconds} s')
@@ -126,12 +129,6 @@ def try_n_times( function, parameters,  n=3, expected_exceptions='',
                 time.sleep(seconds)
             else:
                 raise TooManyRetries
-
-##        except expected_exceptions:
-##            logging.warning(
-##                f'try_n_times(): try {try_it} expected exception, sleeping {seconds} s')
-##            if try_it < try_it_times:
-##                time.sleep(seconds)
         except TrySlowlyUnexpectedException:
             logging.error(
                 f'try_n_times(): **Unexpected exception** (in try_slowly), sleeping {seconds} s')
@@ -142,76 +139,3 @@ def try_n_times( function, parameters,  n=3, expected_exceptions='',
                 raise TooManyRetries
     raise TooManyRetries
 
-def tests():
-    """some tests"""
-    logging.basicConfig(level=logging.DEBUG)
-    testing_test_times_straddle_minute()
-    tests_try_slowly()
-    tests_try_n_times()
-
-def testing_test_times_straddle_minute():
-    """test test_times_straddle_minute"""
-    #test test_times_straddle_minute
-    time_15m41s = 941
-    time_16m41s = 1001
-    test16after = 16 # True
-    test10after = 10 # False
-    list_true = [20, 0 ,59, test16after] # true
-    list_false = [1, 2, 4, 55] #False
-    list_empty = []
-    broken1 = [1, 60, 61, 1000] # some out of range
-    broken2 = "2"
-    broken3 = [1, 2, 'wer']
-    broken4 = False
-    tests = [test16after,test10after ,list_true,list_false, list_empty,
-             broken1, broken2, broken3, broken4 ]
-    print("*** test_times_straddle_minute")
-    for test in tests:
-        print(f'testing: {test} ')
-        try:
-            x = test_times_straddle_minute(time_16m41s,time_15m41s, test )
-            print(f'result {x}')
-        except:
-            print('Exception error:') # {sys.exc_info()[0]}')
-        print("***")
-
-def tests_try_slowly():
-    """test try_slowly"""
-    #test try_slowly
-    print("*** test try_slowly")
-    #print(try_slowly.expected_exception_count)
-    print("*** test that should work")
-    result = try_slowly( print, 'x' )
-    print(f'returned: {result}')
-    print('below exception counts should be 0')
-    print(f'try_slowly.expected_exception_count: {try_slowly.expected_exception_count}')
-    print(f'try_slowly.unexpected_exception_count: {try_slowly.unexpected_exception_count}')
-    print("*** test that should be expected")
-    result2= result3 = None
-    try:
-        result2 = try_slowly( open , '/nonexisting_asdf' , expected_exceptions = FileNotFoundError)
-    except TrySlowlyExpectedException:
-        pass
-    if result2 is not None:
-        print(f'very strange... returned: {result2}')
-    print("*** test that should be unexpected")
-    try:
-        result3 = try_slowly( open , '/nonexisting_asdf')
-    except TrySlowlyExpectedException:
-        print("expected")
-    except TrySlowlyUnexpectedException:
-        print("unexpected")
-    except:
-        print("completely unexpected")
-    if result3 is not None:
-        print(f'very strange... returned: {result3}')
-    print('below exception counts should be 1')
-    print(f'try_slowly.expected_exception_count: {try_slowly.expected_exception_count}')
-    print(f'try_slowly.unexpected_exception_count: {try_slowly.unexpected_exception_count}')
-    #TODO: test single exception and set of exceptions
-    #TODO: better errors
-
-def tests_try_n_times():
-    """test try_n_times"""
-    #TODO
-    print("TODO: test try_n_times")
