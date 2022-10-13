@@ -15,7 +15,7 @@ class TrySlowlyExpectedException(BaseException):
 class TrySlowlyUnexpectedException(BaseException):
     """UnexpectedException"""
     pass
-class TrySlowlyEmptyExpectedException(BaseException):
+class EmptyExpectedException(BaseException):
     """expectedexception is default, used as a filler to
        skip the First Exception test and move on to
        TrySlowlyUnexpectedException
@@ -24,7 +24,8 @@ class TrySlowlyEmptyExpectedException(BaseException):
 class TooManyRetries(BaseException):
     """TooManyRetries"""
     pass
-def test_times_straddle_minute( time_1,time_2, minutes ):
+
+def test_times_straddle_minute( time_1,time_2, minutes ) -> bool:
     """
     Tests if start of a minute or list of minutes is between time1 and time2.
 
@@ -51,7 +52,37 @@ def test_times_straddle_minute( time_1,time_2, minutes ):
             return True
     return False
 
-def try_slowly(function, parameters, expected_exceptions=TrySlowlyEmptyExpectedException,
+def test_is_BaseException( x ) -> bool:
+    """Test if object is BaseException"""
+    logging.debug(f'test_is_BaseException: {x} type: {type(x)}')
+    try:
+        if issubclass(x, BaseException):
+            logging.debug('test_is_BaseException: True')
+            return True
+        else:
+            logging.debug('test_is_BaseException: False (but it is a class)')
+            return False
+    except:
+        logging.debug('test_is_BaseException: False (not a class)')
+        return False
+
+
+def expected_exceptions_valid_tuple(expected_exceptions) -> tuple:
+    """checks if an Exception or tuple of exceptions is valid and returns a tuple"""
+    if isinstance(expected_exceptions, tuple):
+        print('expected_exceptions_valid_tuple: tuple, len: ', len(expected_exceptions))
+        for item in expected_exceptions:
+            if not test_is_BaseException(item):
+                raise TypeError
+    else:
+        if not test_is_BaseException(expected_exceptions):
+            raise TypeError
+        else:
+            return (expected_exceptions,)
+    return expected_exceptions
+
+
+def try_slowly(function, parameters, expected_exceptions=EmptyExpectedException,
                seconds = 1):
     """
         Try a function but sleep if this has been called before
@@ -60,6 +91,7 @@ def try_slowly(function, parameters, expected_exceptions=TrySlowlyEmptyExpectedE
         expected_exceptions can be an exception or tuple of exceptions
         try_slowly.success is True on success False on failure
     """
+    #TODO:... check expected_exceptions
     try_slowly.success = False
     if not hasattr(try_slowly,'expected_exception_count'):
         try_slowly.expected_exception_count = 0
@@ -101,7 +133,7 @@ def try_slowly(function, parameters, expected_exceptions=TrySlowlyEmptyExpectedE
     logging.error('try_slowly(): should not be here')
 
 
-def try_n_times( function, parameters,  n=3, expected_exceptions='',
+def try_n_times( function, parameters,  n=3, expected_exceptions=EmptyExpectedException,
                  seconds=1, try_slowly_seconds=1):
     """ Try a function up to n times (default 3)
 
@@ -114,6 +146,13 @@ def try_n_times( function, parameters,  n=3, expected_exceptions='',
     """
     try_n_times.success = False
     try_it_times = n
+    exception_tuple = ( (TrySlowlyExpectedException,) +
+                        expected_exceptions_valid_tuple(expected_exceptions))
+    logging.debug(f'try_n_times: expected_exceptions: {expected_exceptions}')
+    logging.debug(f'try_n_times: *** type(expected_exceptions): {type(expected_exceptions)}')
+    logging.debug(f'try_n_times: *** exception_tuple: {exception_tuple}')
+    logging.debug(f'try_n_times: *** type(exception_tuple): {type(exception_tuple)}')
+
     for try_it in range(1,try_it_times+1):
         #try_error = True
         logging.info(f'try_n_times(): try # {try_it}/{try_it_times}')
@@ -122,7 +161,7 @@ def try_n_times( function, parameters,  n=3, expected_exceptions='',
                                 expected_exceptions, seconds=try_slowly_seconds )
             try_n_times.success = True
             return result
-        except ( (TrySlowlyExpectedException,) + (expected_exceptions, )):
+        except exception_tuple:
             logging.info(
                 f'try_n_times(): expected exception (in try_slowly)\n sleeping {seconds} s')
             if try_it <= try_it_times:
@@ -138,4 +177,3 @@ def try_n_times( function, parameters,  n=3, expected_exceptions='',
             else:
                 raise TooManyRetries
     raise TooManyRetries
-
