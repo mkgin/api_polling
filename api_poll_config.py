@@ -10,12 +10,9 @@ Loads configuration to handle API polling
 
 TODO: switch print statments to debug logs
 """
-
-import pprint # dont really need this except for main()
 import logging
 import os
 import yaml
-
 
 def load_config():
     """Loads the YAML config first from config.yml, then own_config.yml"""
@@ -27,15 +24,15 @@ def load_config():
     # and maybe allow one to be specified as an argument
     configfile_default = f'{current_path}/config.yml'
     configfile_own = f'{current_path}/own_config.yml'
-    print( current_path,configfile_default, configfile_own)
+    print(current_path, configfile_default, configfile_own)
     if os.path.isfile(configfile_default):
         config = yaml.safe_load(open(configfile_default))
     else:
-        logging.warning(f'Missing:  {configfile_default}' )
+        logging.warning(f'Missing:  {configfile_default}')
     if os.path.isfile(configfile_own):
         config.update(yaml.safe_load(open(configfile_own)))
     else:
-        logging.warning('Missing: {configfile_own}' )
+        logging.warning('Missing: {configfile_own}')
     return config
 
 # store the sending strategy for endpoints here...
@@ -43,15 +40,16 @@ def load_config():
 # or sending_strategy[endpoint]['polling_interval']
 # sending_strategy={}
 
-def check_fixed_sending_strategy_list( fixed_list ):
+def check_fixed_sending_strategy_list(fixed_list):
     """returns a valid sorted list with unique values.
     Values should be int and in range 0-59
     """
     return_list = [] # cleaned list
     for i in set(fixed_list): # iterate unique values
         logging.debug(f'**check fixed: value {i} {type(i)}')
-        if type(i) is int: # check type
-            if i >= 0 and i < 60: # check range
+        if type(i) is int:  # check type
+            #if i >= 0 and i < 60: # check range
+            if 60 > i >= 0:  # check range
                 return_list.append(i)
             else:
                 logging.warning(f'check_fixed.. value {i} in fixed out of range, ignoring it.')
@@ -59,7 +57,7 @@ def check_fixed_sending_strategy_list( fixed_list ):
             logging.warning(f'check_fixed.. value {i} is not of type int, ignoring it.')
     return sorted(return_list)
 
-def get_sending_strategy( sending_strategy, upper_strategy , sending_default ):
+def get_sending_strategy(sending_strategy, upper_strategy , sending_default):
     """Reads sending strategy from a top level of the configuration data in sending_strategy.
 
        If there is no sending_strategy at the current level, the upper level or defaults are used.
@@ -148,15 +146,16 @@ def load_api_endpoint_key_config(api_config):
             # if type is dict check if it is a keylist and iterate
             if type(endpoint[keylist]) is dict:
                 if 'keys' in endpoint[keylist]:
-                    sending_strategy_keylist = get_sending_strategy( endpoint[keylist],
-                                                             sending_strategy_endpoint,
-                                                             sending_strategy_default)
+                    sending_strategy_keylist = \
+                        get_sending_strategy(endpoint[keylist],
+                                             sending_strategy_endpoint,
+                                             sending_strategy_default)
                     for current_key in endpoint[keylist]['keys']:
                         logging.debug( f'FOR3a current_key {current_key}' )
                         for k in endpoint[keylist]['keys']:
-                            logging.debug( f'KEY: {k}')
-                            kdict= { k : sending_strategy_keylist}
-                            api_endpoint_key_config[endpoint['name']].update( kdict )
+                            logging.debug(f'KEY: {k}')
+                            kdict= {k : sending_strategy_keylist}
+                            api_endpoint_key_config[endpoint['name']].update(kdict )
                     else:
                         logging.debug(f'FOR3a skipping {current_key}')
             # if type is not dict check if it is a keylist and iterate
@@ -165,14 +164,14 @@ def load_api_endpoint_key_config(api_config):
                     logging.debug(f'FOR3b keylist {keylist} '
                                   'endpoint[keylist] {endpoint[keylist]}')
                     for k in endpoint[keylist]:
-                        logging.debug( f'KEY(keys): {k}')
-                        kdict = { k : sending_strategy_endpoint}
-                        api_endpoint_key_config[endpoint['name']].update( kdict )
+                        logging.debug(f'KEY(keys): {k}')
+                        kdict = {k : sending_strategy_endpoint}
+                        api_endpoint_key_config[endpoint['name']].update(kdict)
                 else:  # TODO: this isn't used anymore I think
                     logging.debug(f'FOR3b skipping {endpoint[keylist]} '
                                   '(not dict) or not a key list')
         logging.debug('*************')
-    return api_endpoint_key_config #a big dictionary of dictionaries.
+    return api_endpoint_key_config  # a big dictionary of dictionaries.
 
 def load_polling_interval_minimum(api_config):
     """returns lowest polling interval from the config. checks top level
@@ -187,24 +186,4 @@ def load_polling_interval_minimum(api_config):
             polling_interval_minimum = endpoint['polling_interval']
         elif polling_interval_minimum  > endpoint['polling_interval']:
             polling_interval_minimum = endpoint['polling_interval']
-
     return polling_interval_minimum
-
-
-def main():
-    """Example use"""
-    logging.basicConfig(level=logging.INFO)
-    # Load api config from file
-    api_config = yaml.safe_load(open('tests/api_design_test.yml'))
-    #api_config = yaml.safe_load(open('api_design.yml'))
-    # get the config
-    endpoint_key_config = load_api_endpoint_key_config(api_config)
-    # pretty print it
-    print('***** api_config[\'endpoint\']')
-    pprint.pp(api_config['endpoint'])
-    print('***** endpoint_key_config (dict)')
-    pprint.pp(endpoint_key_config)
-    print('*****')
-    print(f'key_prefix: {load_key_prefix_config(api_config)}')
-    print(f'polling_interval_minimum: {load_polling_interval_minimum(api_config)}')
-#main()
