@@ -144,6 +144,8 @@ def try_n_times( function, parameters,  n=3, expected_exceptions=EmptyExpectedEx
 
         try_n_times.success is True on success False on failure
     """
+    if not hasattr(try_n_times,'expected_exception_count'):
+        try_n_times.expected_exception_count = 0
     try_n_times.success = False
     try_it_times = n
     exception_tuple = ( (TrySlowlyExpectedException,) +
@@ -175,5 +177,7 @@ def try_n_times( function, parameters,  n=3, expected_exceptions=EmptyExpectedEx
             if try_it <= try_it_times:
                 time.sleep(seconds)
             else:
-                raise TooManyRetries
-    raise TooManyRetries
+                raise UnexpectedException
+    logging.error(
+        f'try_n_times(): **Unexpected exception** left the for loop')
+    raise UnexpectedException
