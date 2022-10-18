@@ -33,12 +33,11 @@ def raise_exception3(a):
     """a test"""
     raise TypeError
 
-
 def tests():
     """some tests"""
     logging.basicConfig(level=logging.DEBUG)
-##    testing_test_times_straddle_minute()
-##    tests_try_slowly()
+    testing_test_times_straddle_minute()
+    tests_try_slowly()
     tests_try_n_times()
     test_expected_exceptions_valid_tuple()
 
