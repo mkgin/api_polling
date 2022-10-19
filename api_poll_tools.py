@@ -25,6 +25,21 @@ class TooManyRetries(BaseException):
     """TooManyRetries"""
     pass
 
+def count_timestamps_in_interval(timestamp_list, t1=int(time.time()), t2=None, interval=None ):
+    """
+    counts timestamps in a list withing a given interval 
+    default interval is 1 hour ago to "now" to t1 if set.
+    """
+    if interval is None:
+        interval = 3600
+    if t2 is None:
+        t2 = t1 - interval
+    count = 0
+    for x in timestamp_list:
+        if min(t1,t2) <= x <= max(t1,t2):
+            count += 1
+    return count
+
 def test_times_straddle_minute( time_1,time_2, minutes ) -> bool:
     """
     Tests if start of a minute or list of minutes is between time1 and time2.
@@ -166,7 +181,7 @@ def try_n_times( function, parameters,  n=3, expected_exceptions=EmptyExpectedEx
         except exception_tuple:
             logging.info(
                 f'try_n_times(): expected exception (in try_slowly)\n sleeping {seconds} s')
-            if try_it <= try_it_times:
+            if try_it < try_it_times:
                 time.sleep(seconds)
             else:
                 raise TooManyRetries
@@ -174,7 +189,7 @@ def try_n_times( function, parameters,  n=3, expected_exceptions=EmptyExpectedEx
             logging.error(
                 f'try_n_times(): **Unexpected exception** (in try_slowly), sleeping {seconds} s')
             logging.error(sys.exc_info())
-            if try_it <= try_it_times:
+            if try_it < try_it_times:
                 time.sleep(seconds)
             else:
                 raise UnexpectedException
