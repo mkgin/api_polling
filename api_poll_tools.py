@@ -25,19 +25,30 @@ class TooManyRetries(BaseException):
     """TooManyRetries"""
     pass
 
-def count_timestamps_in_interval(timestamp_list, t1=int(time.time()), t2=None, interval=None ):
+def count_timestamps_in_interval(timestamp_list,/,t1=None,*, t2=None, interval=None ):
     """
     counts timestamps in a list withing a given interval 
     default interval is 1 hour ago to "now" to t1 if set.
     """
+    #FIXME/TODO... 
+    logging.debug(f'count_timestamps_in_interval: t1 {t1} {type(t1)}')
+    #logging.debug(f'count_timestamps_in_interval: t2 {t2} {type(t2)}')
+    if t1 is None:
+        t1 = int(time.time())
     if interval is None:
         interval = 3600
     if t2 is None:
         t2 = t1 - interval
     count = 0
+    logging.debug(f'count_timestamps_in_interval: t2 {t2} {type(t2)}')
+
     for x in timestamp_list:
+        logging.debug(f'count_timestamps_in_interval: {min(t1,t2)} <= {x} <= {max(t1,t2)}')
+        logging.debug(f'count_timestamps_in_interval: {min(t1,t2) <= x <= max(t1,t2)}')
         if min(t1,t2) <= x <= max(t1,t2):
+            logging.debug('count_timestamps_in_interval: counted')
             count += 1
+    logging.debug(f'count_timestamps_in_interval: counted {count} timestamps')
     return count
 
 def test_times_straddle_minute( time_1,time_2, minutes ) -> bool:
