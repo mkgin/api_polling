@@ -30,11 +30,9 @@ def count_timestamps_in_interval(timestamp_list,/,t1=None,*, t2=None, interval=N
     counts timestamps in a list withing a given interval 
     default interval is 1 hour ago to "now" to t1 if set.
     """
-    #FIXME/TODO... 
-    logging.debug(f'count_timestamps_in_interval: t1 {t1} {type(t1)}')
-    #logging.debug(f'count_timestamps_in_interval: t2 {t2} {type(t2)}')
     if t1 is None:
         t1 = int(time.time())
+    logging.debug(f'count_timestamps_in_interval: t1 {t1} {type(t1)}')
     if interval is None:
         interval = 3600
     if t2 is None:
